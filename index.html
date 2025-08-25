@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jiliab Gräv AB</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header class="header">
+        <a href="/">
+            <img  class="logo" src="images/logo.jpg" alt="Jiliab Gräv AB"/>
+        </a>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Jiliab Gräv AB</h1>
+                <p>Entreprenad. Markarbete. Gräv.</p>
+            </div>
+        </section>
+
+        <section class="testimonials-section">
+            <h2>Vad Våra Kunder Säger</h2>
+            <div class="testimonial-container">
+                <div class="testimonial">
+                    <p>"Jiliab levererar en otroligt proffsig lösning och har alltid kunden i fokus. Inga utmaningar är för svåra!"</p>
+                    <span>- Filip E.</span>
+                </div>
+                <div class="testimonial">
+                    <p>"Riktigt proffsigt"</p>
+                    <span>- Kund i Kungsbacka</span>
+                </div>
+                <div class="testimonial">
+                    <p>"Trevlig, kunnig och väl utfört jobb"</p>
+                    <span>- Anonym</span>
+                </div>
+            </div>
+            </section>
+            
+        <section class="showcase" aria-label="Project showcase">
+            <div class="carousel">
+                <img class="carousel-slide" src="images/2.jpeg"/>
+                <img class="carousel-slide" src="images/3.jpeg"/>
+                <img class="carousel-slide" src="images/4.jpeg"/>
+                <img class="carousel-slide" src="images/6.jpeg"/>
+                <img class="carousel-slide" src="images/7.jpeg"/>
+                <img class="carousel-slide" src="images/8.jpeg"/>
+                <img class="carousel-slide" src="images/9.jpeg"/>
+                <img class="carousel-slide" src="images/10.jpeg"/>
+                <img class="carousel-slide" src="images/11.jpeg"/>
+                <img class="carousel-slide" src="images/12.jpeg"/>
+                <img class="carousel-slide" src="images/13.jpeg"/>
+                <img class="carousel-slide" src="images/14.jpeg"/>
+                <img class="carousel-slide" src="images/15.jpeg"/>
+                <img class="carousel-slide" src="images/16.jpeg"/>
+                <img class="carousel-slide" src="images/17.jpeg"/>
+                <img class="carousel-slide" src="images/18.jpeg"/>
+                <img class="carousel-slide" src="images/19.jpeg"/>
+                <img class="carousel-slide" src="images/20.jpeg"/>
+                <img class="carousel-slide" src="images/21.jpeg"/>
+                <img class="carousel-slide" src="images/22.jpeg"/>
+                <img class="carousel-slide" src="images/23.jpeg"/>
+                <img class="carousel-slide" src="images/24.jpeg"/>
+            </div>
+        </section>
+        <section class="contact-section">
+          <h2>Kontakta Oss</h2>
+          <div>
+            <span>Ring oss på 0706524321 eller skicka ett meddelande till info@jiliab.se</span>
+          </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Jiliab Gräv AB</p>
+    </footer>
+
+    <script>
+(() => {
+  // Initialize every ".carousel" on the page
+  document.addEventListener('DOMContentLoaded', () =>
+    initSeamlessCarousel('.carousel', { speed: 100, gap: 16 }) // speed in px/sec
+  );
+
+  // Expose globally if you want to call it yourself later
+  window.initSeamlessCarousel = initSeamlessCarousel;
+
+  function initSeamlessCarousel(selector = '.carousel', opts = {}) {
+    const speed = opts.speed ?? 100; // px/s
+    const gap   = opts.gap   ?? 16;
+
+    document.querySelectorAll(selector).forEach(container => {
+      if (container.dataset.seamlessReady === '1') return;
+      const originals = Array.from(container.querySelectorAll('.carousel-slide'));
+      if (originals.length < 2) return; // nothing to loop
+
+      container.dataset.seamlessReady = '1';
+      container.style.setProperty('--gap', `${gap}px`);
+
+      // Create the moving track and move original slides into it
+      const track = document.createElement('div');
+      track.className = 'carousel__track';
+      originals.forEach(s => track.appendChild(s));
+      container.appendChild(track);
+
+      // Wait for images to be measurable
+      const imgs = Array.from(track.querySelectorAll('img'));
+      const ready = Promise.all(imgs.map(img => waitForImage(img)));
+
+      ready.then(() => {
+        // Measure width of one full set BEFORE cloning
+        const oneSetWidth = track.scrollWidth;
+
+        // Clone the set once to make a seamless loop
+        const clones = Array.from(track.children).map(node => {
+          const c = node.cloneNode(true);
+          c.setAttribute('data-clone', '');
+          // keep clones out of the a11y tree
+          c.setAttribute('aria-hidden', 'true');
+          c.tabIndex = -1;
+          return c;
+        });
+        clones.forEach(c => track.appendChild(c));
+
+        // Configure animation distance + duration
+        const distance = Math.ceil(oneSetWidth); // px
+        const duration = distance / speed;       // seconds
+        container.style.setProperty('--distance', `${distance}px`);
+        container.style.setProperty('--duration', `${duration}s`);
+
+        // Recalculate on resize (debounced)
+        let raf;
+        const onResize = () => {
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(() => {
+            // After clones exist, total width is ~2x one set
+            const total = track.scrollWidth;
+            const firstSet = Math.round(total / 2);
+            const newDistance = firstSet;
+            const newDuration = newDistance / speed;
+            container.style.setProperty('--distance', `${newDistance}px`);
+            container.style.setProperty('--duration', `${newDuration}s`);
+          });
+        };
+        window.addEventListener('resize', onResize);
+
+        // Respect reduced motion dynamically
+        const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const applyMotionPref = () => {
+          track.style.animationPlayState = mql.matches ? 'paused' : 'running';
+        };
+        mql.addEventListener?.('change', applyMotionPref);
+        applyMotionPref();
+
+        // Pause on hover is handled by CSS; nothing else needed.
+      });
+    });
+  }
+
+  function waitForImage(img) {
+    if (img.decode) return img.decode().catch(() => {});
+    if (img.complete) return Promise.resolve();
+    return new Promise(res => img.addEventListener('load', res, { once: true }));
+  }
+})();
+</script>
+</body>
+
+</html>
